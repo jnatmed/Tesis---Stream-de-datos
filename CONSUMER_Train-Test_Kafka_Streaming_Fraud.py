@@ -4,6 +4,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import precision_recall_fscore_support
 import json
 import numpy as np
+import joblib  # Para guardar y cargar el modelo entrenado
 
 # Crea un consumidor
 consumer = KafkaConsumer(
@@ -15,13 +16,21 @@ consumer = KafkaConsumer(
 
 # Inicializamos el vectorizador y el modelo
 vectorizer = TfidfVectorizer(stop_words='english')
-model = MultinomialNB()
+
+# Intentamos cargar el modelo entrenado previamente
+try:
+    model = joblib.load('modelo_entrenado.pkl')  # Intentamos cargar el modelo existente
+    print("Modelo cargado exitosamente.")
+except:
+    model = MultinomialNB()
+    print("No se encontró modelo previo. Se creará uno nuevo.")
 
 # Variables para entrenamiento incremental y evaluación
 X_train = []
 y_train = []
 predicciones = []
 etiquetas_reales = []
+evaluation_interval = 100  # Evaluar después de procesar 100 opiniones
 
 # Lee los mensajes
 for message in consumer:
@@ -40,7 +49,8 @@ for message in consumer:
             X_tfidf = vectorizer.fit_transform(X_train)
             model.fit(X_tfidf, y_train)
             print(f"Modelo entrenado con {len(X_train)} mensajes.")
-    
+            joblib.dump(model, 'modelo_entrenado.pkl')  # Guardamos el modelo entrenado
+
     # Si es una opinión sin etiqueta, hacemos una predicción
     else:
         X_tfidf = vectorizer.transform([texto])
@@ -51,13 +61,15 @@ for message in consumer:
         # Aquí puedes tener un conjunto de pruebas con etiquetas reales
         etiquetas_reales.append('positivo')  # Etiqueta simulada para evaluación
 
-        # Evaluar cuando tengamos suficientes predicciones
-        if len(predicciones) == len(etiquetas_reales):
+        # Evaluar cada cierto número de opiniones procesadas
+        if len(predicciones) >= evaluation_interval:
             precision, recall, f1, _ = precision_recall_fscore_support(
                 etiquetas_reales, predicciones, average='binary', pos_label='positivo'
             )
-            
             print(f"Precisión: {precision}")
             print(f"Recall: {recall}")
             print(f"F1-score: {f1}")
-            break  # Terminamos después de evaluar el primer ciclo
+            
+            # Resetear predicciones y etiquetas reales para la próxima evaluación
+            predicciones = []
+            etiquetas_reales = []
