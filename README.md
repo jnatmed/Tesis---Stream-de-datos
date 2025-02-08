@@ -1,38 +1,27 @@
-Quiero entrenar un modelo para en un ambiente de streaming de datos, usando un servidor kafka
-- para ello, instalo un servidor kafka version: 3.6.0, el mismo va a correr en el puerto 0.0.0.0:9092
-- ahora quiero procesar por lotes datos en tiempo real desde kafka con River. 
+# Proyecto de Streaming y Entrenamiento en Tiempo Real con Kafka
 
-```python
-from kafka import KafkaConsumer
-import json
-from river import linear_model, preprocessing
+Este proyecto consiste en un sistema de procesamiento de datos en tiempo real utilizando Kafka y un modelo de clasificación para predecir el sentimiento de mensajes. Los datos son procesados y el modelo se entrena de manera incremental utilizando el algoritmo Naive Bayes y sobremuestreo con SMOTE para abordar el desbalance de clases. Además, el sistema evalúa el modelo utilizando métricas de precisión, recall y F1-score.
 
-# Inicializar el modelo
-model = preprocessing.StandardScaler() | linear_model.LogisticRegression()
+## Requisitos
 
-# Conectar a Kafka
-consumer = KafkaConsumer(
-    'transacciones',
-    bootstrap_servers='localhost:9092',
-    value_deserializer=lambda x: json.loads(x.decode('utf-8'))
-)
+- Python 3.x
+- Kafka
+- Librerías de Python necesarias:
+  - `kafka-python`
+  - `sklearn`
+  - `imblearn`
+  - `joblib`
+  - `json`
+  
+Puedes instalar las librerías necesarias utilizando `pip`:
 
-print("Esperando transacciones en tiempo real...")
-
-for message in consumer:
-    transaction = message.value
-    X = {"monto": transaction["monto"]}
-    y = transaction["es_fraude"]
-
-    # Predecimos
-    prediction = model.predict_one(X)
-    print(f"Transacción de {X['monto']}: Predicción = {prediction}")
-
-    # Aprendemos del dato en tiempo real
-    model.learn_one(X, y)
+```bash
+pip install kafka-python scikit-learn imbalanced-learn joblib
 ```
 
-# Para correr Apache Kafka en windows 
+# Instalacion de Kafka
+
+## Para correr Apache Kafka en windows 
 
 1. Iniciar Zookeeper, ya que depende de Zookeeper. 
 
@@ -45,3 +34,9 @@ PS c:\windows\system32> .\bin\windows\zookeeper-server-start.bat .\config\zookee
 PS c:\windows\system32> .\bin\windows\kafka-server-start.bat .\config\server.properties
 ```
 
+o si se prefiere, se pude ejecutar directamente 
+
+```powershell
+.\start-kafka.bat
+```
+Que tiene los comando antes mencionados para ejecutar zookeeper y kafka. 
