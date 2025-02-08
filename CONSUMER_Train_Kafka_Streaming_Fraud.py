@@ -36,5 +36,3 @@ for message in consumer:
         model.fit(X_tfidf, y_train)
         print(f"Modelo entrenado con {len(X_train)} mensajes.")
     
-    # Aquí podrías agregar lógica adicional para predecir el sentimiento de nuevos mensajes
-    # o realizar acciones de evaluación en el modelo.

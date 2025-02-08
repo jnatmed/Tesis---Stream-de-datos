@@ -32,4 +32,8 @@ for i in range(1000):  # Aquí puedes enviar más mensajes si quieres
     
     producer.send('streaming-datos', mensaje)
     print(f"Enviado: {mensaje['texto']} | Sentimiento: {mensaje['sentimiento']}")
+    
+    # Hacemos flush para asegurarnos que el mensaje se envíe
+    producer.flush()
+
     time.sleep(0.001)  # Intervalo de 0.001 segundos entre cada mensaje
